@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öko-Lábnyom Kalkulátor | Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --primary-dark: #27ae60;
+            --accent: #e67e22;
+            --text-main: #2c3e50;
+            --bg-blur: rgba(255, 255, 255, 0.85);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        #bg-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; 
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+
+            filter: brightness(0.7) blur(0px);
+            transition: filter 0.35s ease, opacity 0.35s ease;
+            opacity: 1;
+        }
+
+        #bg-overlay.blur-transition {
+            filter: brightness(0.7) blur(18px);
+            opacity: 0.6;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 550px;
+            perspective: 1000px;
+        }
+
+        .calc-card {
+            background: var(--bg-blur);
+            backdrop-filter: blur(15px);
+            padding: 3rem 2.5rem;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative;
+        }
+
+        .progress-container {
+            margin-bottom: 2rem;
+        }
+        .progress-bar-bg {
+            height: 8px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        #progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #3498db);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        h1 { font-weight: 700; font-size: 2rem; margin-bottom: 1rem; color: #1e272e; }
+        .question-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.4; }
+
+        .options-list { display: grid; gap: 12px; margin-bottom: 2rem; }
+
+        .btn {
+            padding: 14px 20px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            background: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 18px;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .btn-primary:hover { background: var(--primary-dark); color: white; }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 1.5rem;
+            gap: 10px;
+        }
+
+
+        .nav-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-right {
+            display: flex;
+        }
+
+
+        .btn-nav { font-size: 0.85rem; padding: 8px 15px; background: rgba(0,0,0,0.05); }
+
+        .result-value { font-size: 4rem; font-weight: 800; color: var(--primary-dark); margin: 10px 0; }
+        .result-box {
+            padding: 25px;
+            border-radius: 20px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .cat-alacsony { background: #e8f8f0; color: #1e8449; border-left: 5px solid #2ecc71; }
+        .cat-kozepes { background: #fef9e7; color: #9a7d0a; border-left: 5px solid #f1c40f; }
+        .cat-magas { background: #fdf2e9; color: #a04000; border-left: 5px solid #e67e22; }
+        .cat-critical { background: #fdedec; color: #943126; border-left: 5px solid #e74c3c; }
+
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #counter { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+
+<div id="bg-overlay"></div>
+
+<div class="container">
+    <div class="calc-card">
+        
+        <div id="start-page" class="fade-in">
+            <h1>Ökológiai Lábnyom</h1>
+            <p style="margin-bottom: 2rem; color: #57606f;">Kiváncsi vagy, mekkora hatással vagy a bolygóra? Töltsd ki 2 perces tesztünket és kapj pontos képet a fogyasztásodról.</p>
+            <button class="btn btn-primary" onclick="startQuiz()">Kalkuláció indítása</button>
+        </div>
+
+        <div id="quiz" class="hidden">
+            <div class="progress-container">
+                <div id="counter">1 / 20</div>
+                <div class="progress-bar-bg"><div id="progress-fill"></div></div>
+            </div>
+            
+            <div id="q-box" class="fade-in">
+                <h2 id="q-text" class="question-title">Betöltés...</h2>
+                <div id="options" class="options-list"></div>
+            </div>
+
+            <div class="nav-buttons">
+                <div class="nav-left">
+                    <button class="btn btn-nav" onclick="goBack()">Vissza</button>
+                    <button class="btn btn-nav" onclick="skipQuestion()">Kihagyás</button>
+                </div>
+
+                <div class="nav-right">
+                    <button class="btn btn-nav" onclick="resetQuiz()">Újrakezdés</button>
+            </div>
+</div>
+        </div>
+
+        <div id="results" class="hidden fade-in">
+            <h2>Az Te eredményed:</h2>
+            <div id="t-output" class="result-value">0,00 t</div>
+            <p style="font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">CO₂ kibocsátás / év</p>
+
+            <div id="category-box" class="result-box">
+                <h3 id="category-name"></h3>
+                <p id="category-desc"></p>
+            </div>
+
+            <button onclick="location.reload()" class="btn btn-primary">Újrakezdés</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const questions = [
+    { q: "Hetente hány műanyag palackot használsz el?", bg: "kepek/01.avif", opts: [["0–2 palack", 20], ["3–5 palack", 50], ["6+ palack", 120]] },
+{ q: "Havonta mennyi egyszer használatos műanyagot használsz?", bg: "kepek/02.jpg", opts: [["Kevés", 30], ["Közepes", 100], ["Sok", 250]] },
+{ q: "Ruhavásárlás gyakorisága:", bg: "kepek/03.avif", opts: [["Ritkán", 50], ["Közepesen", 150], ["Gyakran", 400]] },
+{ q: "Évente hány elektronikai eszközt veszel?", bg: "kepek/04.avif", opts: [["0–1 darab", 30], ["2–3 darab", 150], ["4+ darab", 500]] },
+{ q: "Hetente hányszor eszel gyorséttermi ételt?", bg: "kepek/05.jpg", opts: [["Soha", 0], ["1–2 alkalom", 100], ["3+ alkalom", 350]] },
+{ q: "Melyik a leggyakoribb közlekedési módod?", bg: "kepek/06.jpg", opts: [["Gyalog / bicikli", 50], ["Tömegközlekedés", 300], ["Autó", 1500]] },
+{ q: "Évente hányszor repülsz?", bg: "kepek/07.avif", opts: [["Soha", 0], ["1 rövid út", 500], ["2+ vagy hosszú út", 1500]] },
+{ q: "Heti szinten mennyi szemetet termelsz?", bg: "kepek/08.avif", opts: [["Kevés", 50], ["Fél kuka", 200], ["Tele kuka", 600]] },
+{ q: "Milyen rendszeresen szelektálsz?", bg: "kepek/09.avif", opts: [["Mindig", 50], ["Néha", 200], ["Soha", 400]] },
+{ q: "Milyen étrendet követsz általában?", bg: "kepek/10.avif", opts: [["Növényi alapú", 800], ["Vegyes", 2000], ["Sok hús", 3300]] },
+{ q: "Milyen gyakori az ételpazarlás nálad?", bg: "kepek/11.avif", opts: [["Ritkán", 50], ["Néha", 200], ["Gyakran", 600]] },
+{ q: "Havonta hányszor veszel készételt?", bg: "kepek/12.avif", opts: [["0–1 alkalom", 20], ["2–4 alkalom", 150], ["5+ alkalom", 400]] },
+{ q: "Vásárolsz-e használt tárgyakat?", bg: "kepek/13.avif", opts: [["Igen, sokat", 50], ["Néha", 200], ["Soha", 400]] },
+{ q: "Havonta hány online rendelésed van?", bg: "kepek/14.avif", opts: [["0–1 csomag", 20], ["2–4 csomag", 150], ["5+ csomag", 400]] },
+{ q: "Helyi vagy import termékeket veszel?", bg: "kepek/15.avif", opts: [["Helyi", 100], ["Vegyes", 300], ["Sok import", 700]] },
+{ q: "Komposztálsz otthon?", bg: "kepek/16.avif", opts: [["Igen", 50], ["Néha", 200], ["Nem", 400]] },
+{ q: "Energia-megtakarító szokások otthon?", bg: "kepek/17.avif", opts: [["Tudatos", 200], ["Közepes", 500], ["Kevés", 1000]] },
+{ q: "Mosási / szárítási szokások?", bg: "kepek/18.avif", opts: [["Takarékos", 100], ["Átlagos", 300], ["Intenzív", 700]] },
+{ q: "Szoktál autómegosztást használni?", bg: "kepek/19.avif", opts: [["Gyakran", 100], ["Néha", 300], ["Soha", 700]] },
+{ q: "Digitális fogyasztás (streaming)?", bg: "kepek/20.avif", opts: [["Alacsony", 50], ["Közepes", 150], ["Magas", 400]] }
+];
+
+
+let step = 0;
+let answers = [];
+
+function resetQuiz() {
+    step = 0;
+    answers = [];
+
+    document.getElementById('start-page').classList.remove('hidden');
+    document.getElementById('quiz').classList.add('hidden');
+    document.getElementById('results').classList.add('hidden');
+
+    updateBG("https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600");
+}
+
+function updateBG(url) {
+    const bg = document.getElementById('bg-overlay');
+
+    // Blur + halványítás indul
+    bg.classList.add('blur-transition');
+
+    setTimeout(() => {
+        bg.style.backgroundImage = `url('${url}')`;
+
+        // Visszaélesítés
+        bg.classList.remove('blur-transition');
+    }, 180); // gyors váltás
+}
+
+function startQuiz() {
+    document.getElementById('start-page').classList.add('hidden');
+    document.getElementById('quiz').classList.remove('hidden');
+    loadQ();
+}
+
+function loadQ() {
+    const q = questions[step];
+    updateBG(q.bg);
+
+    const qBox = document.getElementById('q-box');
+    qBox.classList.remove('fade-in');
+    void qBox.offsetWidth;
+    qBox.classList.add('fade-in');
+
+    document.getElementById('q-text').innerText = q.q;
+    document.getElementById('counter').innerText = `${step + 1} / ${questions.length}`;
+    document.getElementById('progress-fill').style.width = `${((step + 1) / questions.length) * 100}%`;
+
+    const optContainer = document.getElementById('options');
+    optContainer.innerHTML = '';
+
+    q.opts.forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.innerText = o[0];
+        b.onclick = () => selectOption(o[1]);
+        optContainer.appendChild(b);
+    });
+}
+
+function selectOption(val) {
+    answers[step] = val;
+    nextStep();
+}
+
+function nextStep() {
+    step++;
+    if (step < questions.length) {
+        loadQ();
+    } else {
+        showFinal();
+    }
+}
+
+function goBack() {
+    if (step > 0) {
+        step--;
+        loadQ();
+    }
+}
+
+function skipQuestion() {
+    answers[step] = 0;
+    nextStep();
+}
+
+function showFinal() {
+    document.getElementById('quiz').classList.add('hidden');
+    document.getElementById('results').classList.remove('hidden');
+
+    const totalKg = answers.reduce((a, b) => a + b, 0);
+    const tonnes = totalKg / 1000;
+    
+    document.getElementById('t-output').innerText = tonnes.toLocaleString('hu-HU', {minimumFractionDigits: 2}) + " t";
+
+    let cat, desc, cls, finalBG;
+
+    if (totalKg < 1500) {
+        cat = "Öko-Hős";
+        desc = "Lenyűgöző! Életmódod példaértékű, minimális terhelést jelent a Föld számára.";
+        cls = "cat-alacsony";
+        finalBG = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600";
+    } else if (totalKg <= 3500) {
+        cat = "Tudatos Fogyasztó";
+        desc = "Jó úton jársz. A lábnyomod fenntartható keretek között mozog, de mindig van hova fejlődni.";
+        cls = "cat-kozepes";
+        finalBG = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600";
+    } else {
+        cat = "Figyelemfelkeltő";
+        desc = "Az átlagosnál nagyobb ökológiai lábnyom. Érdemes lenne átgondolni az utazási és étkezési szokásaidat.";
+        cls = "cat-magas";
+        finalBG = "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1600";
+    }
+
+    updateBG(finalBG);
+    const cb = document.getElementById('category-box');
+    cb.className = "result-box " + cls;
+    document.getElementById('category-name').innerText = cat;
+    document.getElementById('category-desc').innerText = desc;
+}
+
+updateBG("https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600");
+</script>
+
+</body>
+</html>
